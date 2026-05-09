@@ -1,3 +1,4 @@
+import math
 import pandas as pd
 from collections import defaultdict
 
@@ -113,37 +114,31 @@ def get_k_factor(tournament):
         return 50
 
     # Eliminatorias
+    # CAMBIO: subido de 12 a 30 (más representativo de la importancia real)
     elif "qualification" in tournament:
-        return 12
+        return 30
 
     # Nations League
     elif "Nations League" in tournament:
         return 20
 
-    # Ignorar amistosos
+    # CAMBIO: amistosos ya no ignorados, K bajo en vez de 0
     elif "Friendly" in tournament:
-        return 0
+        return 6
 
     return 10
 
 # =========================
-# RECENCY
+# GOAL DIFFERENCE MULTIPLIER
+# CAMBIO: agregado multiplicador logarítmico por diferencia de goles
 # =========================
 
-def get_recency_multiplier(date):
+def get_margin_multiplier(goal_diff):
 
-    years_old = CURRENT_YEAR - date.year
-
-    if years_old <= 2:
+    if goal_diff == 0:
         return 1.0
 
-    elif years_old <= 3:
-        return 0.7
-
-    elif years_old <= 4:
-        return 0.5
-
-    return 0.25
+    return math.log(abs(goal_diff) + 1) * 1.5
 
 # =========================
 # YEARLY REGRESSION
@@ -227,23 +222,25 @@ for _, row in df.iterrows():
         actual_away = 0.5
 
     # =========================
-    # NO GOAL DIFFERENCE BONUS
+    # GOAL DIFFERENCE BONUS
+    # CAMBIO: margin_multiplier ahora usa diferencia de goles real
     # =========================
 
-    margin_multiplier = 1.0
+    goal_diff = abs(
+        row["home_score"] - row["away_score"]
+    )
+
+    margin_multiplier = get_margin_multiplier(goal_diff)
 
     # =========================
     # UPDATE VALUE
+    # CAMBIO: eliminado el min(..., 40) que truncaba partidos de Mundial
     # =========================
 
     k = get_k_factor(row["tournament"])
 
-    recency = get_recency_multiplier(row["date"])
-
-    update = min(
-        k * margin_multiplier * recency,
-        40
-    )
+    # CAMBIO: recency_multiplier eliminado (redundante con regresión anual)
+    update = k * margin_multiplier
 
     # =========================
     # UPDATE ELO

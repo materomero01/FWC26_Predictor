@@ -27,9 +27,11 @@ def predict_match(team_a, team_b):
 
     # =========================
     # ELO SCALE
+    # CAMBIO: corregido de 200 a 400 para ser consistente con elo.py
+    # Con 200 se sobreestimaba la diferencia: 200 pts ELO daba 76% en vez de 64%
     # =========================
 
-    SCALE = 200
+    SCALE = 400
 
     # =========================
     # WIN PROBABILITIES
