@@ -188,6 +188,21 @@ def predict_score(team_a, team_b):
 
     return goals_a, goals_b
 
+
+# =========================
+# SCORE PREDICTION (DETERMINISTA PARA PRODE)
+# Retorna el resultado matemático más probable (sin azar)
+# =========================
+def predict_score_prode(team_a, team_b):
+    lambda_a, lambda_b = get_lambdas(team_a, team_b)
+
+    # Redondeamos la expectativa matemática al gol entero más cercano.
+    # Esto elimina las sorpresas y te da el resultado "estadísticamente más seguro".
+    goals_a = int(round(lambda_a))
+    goals_b = int(round(lambda_b))
+
+    return goals_a, goals_b
+
 # =========================
 # MAIN — debug
 # =========================
@@ -216,3 +231,5 @@ if __name__ == "__main__":
         # muestra 5 scores simulados
         scores = [predict_score(team_a, team_b) for _ in range(5)]
         print(f"  Scores simulados: {scores}\n")
+
+
