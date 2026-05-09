@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from collections import defaultdict
+from modifiers import MARKET_VALUE_M, HOST_ADVANTAGE, PEDIGREE_BONUS, INJURY_PENALTY
 
 # =========================
 # CONFIG
@@ -143,32 +144,52 @@ def get_team_stats(team, n=LAST_N_MATCHES):
 
     return attack, defense
 
-# =========================
-# LAMBDA DE GOLES ESPERADOS
-# Dixon-Coles + ajuste por ELO:
-# lambda_a = base * (attack_a / base) * (defense_b / base) * elo_factor
-# El ELO factor amplifica/reduce los lambdas según diferencia de rating
-# =========================
 
-def get_lambdas(team_a, team_b):
-
+# =========================
+# LAMBDA DE GOLES ESPERADOS CON MODIFICADORES
+# =========================
+def get_lambdas(team_a, team_b, is_knockout=False):
     from elo import ratings
 
     attack_a, defense_a = get_team_stats(team_a)
     attack_b, defense_b = get_team_stats(team_b)
 
+    # 1. ELO Base Histórico
     elo_a = ratings[team_a]
     elo_b = ratings[team_b]
 
-    # factor ELO: >1 si team_a es mejor, <1 si es peor
-    # divisor 800 equilibra impacto ELO con variabilidad del Poisson
+    # 2. Modificadores de Localía e Hinchada
+    elo_a += HOST_ADVANTAGE.get(team_a, 0)
+    elo_b += HOST_ADVANTAGE.get(team_b, 0)
+
+    # 3. Modificadores por Lesiones (Manual override)
+    elo_a += INJURY_PENALTY.get(team_a, 0)
+    elo_b += INJURY_PENALTY.get(team_b, 0)
+
+    # 4. Ajuste por Valor de Mercado (Transformamos a bono ELO)
+    val_a = MARKET_VALUE_M.get(team_a, 10)
+    val_b = MARKET_VALUE_M.get(team_b, 10)
+
+    diff_mercado = val_a - val_b
+    bono_mercado_a = (diff_mercado / 100) * 5 if diff_mercado > 0 else 0
+    bono_mercado_b = (-diff_mercado / 100) * 5 if diff_mercado < 0 else 0
+
+    elo_a += bono_mercado_a
+    elo_b += bono_mercado_b
+
+    # 5. Bono de Pedigrí (SOLO si es fase eliminatoria)
+    if is_knockout:
+        elo_a *= PEDIGREE_BONUS.get(team_a, 1.0)
+        elo_b *= PEDIGREE_BONUS.get(team_b, 1.0)
+
+    # 6. Factor ELO final
     elo_factor_a = 10 ** ((elo_a - elo_b) / 800)
     elo_factor_b = 10 ** ((elo_b - elo_a) / 800)
 
     lambda_a = BASE_GOALS * (attack_a / BASE_GOALS) * (defense_b / BASE_GOALS) * elo_factor_a
     lambda_b = BASE_GOALS * (attack_b / BASE_GOALS) * (defense_a / BASE_GOALS) * elo_factor_b
 
-    # clamping razonable
+    # Clamping razonable
     lambda_a = max(min(lambda_a, 5.0), 0.2)
     lambda_b = max(min(lambda_b, 5.0), 0.2)
 

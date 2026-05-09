@@ -7,6 +7,7 @@ from groups import (
 )
 from elo import ratings
 from poisson_model import get_lambdas
+from penalties import get_penalty_winner, PENALTY_WIN_RATES, PENALTY_PLAYED
 
 # =========================
 # CONFIGURACIÓN
@@ -22,26 +23,18 @@ GROUPS = {
 # =========================
 # MOTOR DE CONSENSO MONTE CARLO
 # =========================
-def obtener_consenso(team_a, team_b, n=N_SIMULACIONES):
-    """
-    Simula el partido N veces usando Poisson y devuelve 
-    el resultado EXACTO que más veces se repitió.
-    """
-    lambda_a, lambda_b = get_lambdas(team_a, team_b)
-    
-    # Simulación vectorizada ultrarrápida
+def obtener_consenso(team_a, team_b, n=N_SIMULACIONES, is_knockout=False):
+    # Le pasamos el parámetro a get_lambdas
+    lambda_a, lambda_b = get_lambdas(team_a, team_b, is_knockout=is_knockout)
+
     sims_a = np.random.poisson(lambda_a, n)
     sims_b = np.random.poisson(lambda_b, n)
-    
-    # Juntamos los goles de A y B en pares (ej: (2, 1), (0, 0))
+
     resultados = zip(sims_a, sims_b)
-    
-    # Contamos cuál par se repite más
     conteo = Counter(resultados)
     mas_comun, frecuencia = conteo.most_common(1)[0]
-    
+
     probabilidad = (frecuencia / n) * 100
-    
     return mas_comun[0], mas_comun[1], probabilidad
 
 # =========================
@@ -133,8 +126,11 @@ def armar_16vos_prode(winners, runners, best_thirds):
 # =========================
 # 4. PARTIDO KNOCKOUT (ELIMINACIÓN DIRECTA)
 # =========================
+# =========================
+# 4. PARTIDO KNOCKOUT (ELIMINACIÓN DIRECTA)
+# =========================
 def simular_cruce_prode(team_a, team_b):
-    goals_a, goals_b, prob = obtener_consenso(team_a, team_b)
+    goals_a, goals_b, prob = obtener_consenso(team_a, team_b, is_knockout=True)
     
     print(f"  {team_a:>20} {goals_a} - {goals_b} {team_b:<20} [Prob: {prob:.1f}%]", end="")
     
@@ -145,9 +141,14 @@ def simular_cruce_prode(team_a, team_b):
         print(f" ---> Pasa: {team_b}")
         return team_b
     else:
-        # En el consenso, si un partido "suele empatar", lo definimos por penales (ELO)
-        ganador = team_a if ratings[team_a] > ratings[team_b] else team_b
-        print(f" ---> Empate (Pasa por penales: {ganador})")
+        # === NUEVA LÓGICA DE PENALES ===
+        ganador = get_penalty_winner(team_a, team_b, ratings[team_a], ratings[team_b])
+        
+        # Extraemos la data para mostrarla en el print
+        rate_ganador = PENALTY_WIN_RATES.get(ganador, 0.50) * 100
+        jugados_ganador = PENALTY_PLAYED.get(ganador, 0)
+        
+        print(f" ---> Empate (Pasa por penales: {ganador} | Historial: {rate_ganador:.0f}% en {jugados_ganador} tandas)")
         return ganador
 
 # =========================
