@@ -1,6 +1,7 @@
 import math
 import pandas as pd
 from collections import defaultdict
+import os
 
 # =========================
 # CONFIG
@@ -75,7 +76,13 @@ WORLD_CUP_TEAMS = [
 # LOAD DATA
 # =========================
 
-df = pd.read_csv("data/results.csv")
+# Esto detecta la carpeta donde está parado el archivo elo.py (src/)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Esto sube un nivel y entra a data/
+DATA_PATH = os.path.join(BASE_DIR, "..", "data", "results.csv")
+
+# Ahora leemos usando la ruta absoluta calculada
+df = pd.read_csv(DATA_PATH)
 
 df["date"] = pd.to_datetime(df["date"])
 

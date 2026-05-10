@@ -1,13 +1,19 @@
 import pandas as pd
 from collections import defaultdict
+import os
 
 # ==========================================
 # penalties.py
 # Análisis histórico de efectividad en Penales
 # ==========================================
 
-def load_penalty_stats(filepath="data/shootouts.csv"):
-    df = pd.read_csv(filepath)
+def load_penalty_stats(filepath="shootouts.csv"):
+    # Esto detecta la carpeta donde está parado el archivo penalties.py (src/)
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    # Esto sube un nivel y entra a data/
+    DATA_PATH = os.path.join(BASE_DIR, "..", "data", filepath)
+    
+    df = pd.read_csv(DATA_PATH)
     
     shootouts_played = defaultdict(int)
     shootouts_won = defaultdict(int)
@@ -40,6 +46,10 @@ def get_penalty_winner(team_a, team_b, elo_a, elo_b):
     """
     rate_a = PENALTY_WIN_RATES.get(team_a, 0.50)
     rate_b = PENALTY_WIN_RATES.get(team_b, 0.50)
+    
+    # Penalización por muestra pequeña (menos de 3 tandas)
+    if PENALTY_PLAYED.get(team_a, 0) < 3: rate_a = 0.50
+    if PENALTY_PLAYED.get(team_b, 0) < 3: rate_b = 0.50
     
     if rate_a > rate_b:
         return team_a
