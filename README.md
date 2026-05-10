@@ -1,32 +1,14 @@
+# ⚽ FWC 2026 AI Predictor (Console Edition)
 
-# World Cup 2026 PRODE Optimizer
+Este proyecto es un motor de predicción avanzado para el Mundial 2026, basado en **Machine Learning (XGBoost)** y simulaciones de **Monte Carlo**. 
 
-Proyecto para maximizar aciertos en un PRODE del Mundial 2026.
+## 🧠 El Cerebro del Modelo
+A diferencia de otros predictores, este sistema utiliza:
+* **XGBoost Regressor:** Entrenado con resultados históricos para predecir Lambdas (goles esperados).
+* **Distribución de Poisson:** Para convertir esos Lambdas en probabilidades de resultados exactos.
+* **Algoritmo de Penales:** Simulación penal por penal basada en efectividad histórica real.
 
-## Objetivo
-Predecir resultados 1X2 (local / empate / visitante) para todo el Mundial
-desde un único estado inicial.
-
-## Arquitectura
-
-1. Datos históricos de selecciones
-2. Ratings Elo
-3. Modelo Poisson de goles
-4. Simulación Monte Carlo
-5. Generación automática de picks
-
-## Stack
-- pandas
-- numpy
-- scipy
-- scikit-learn
-
-## Próximos pasos
-
-### 1. Conseguir datasets
-- resultados históricos
-- Elo ratings
-- odds históricas/opcionales
-
-### 2. Ejecutar:
-python src/example.py
+## 🛠️ Cómo usarlo
+Para generar tu Prode, simplemente ejecutá el script principal:
+```bash
+python src/simular_prode_v2.py
