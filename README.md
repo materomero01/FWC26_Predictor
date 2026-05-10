@@ -12,3 +12,11 @@ A diferencia de otros predictores, este sistema utiliza:
 Para generar tu Prode, simplemente ejecutá el script principal:
 ```bash
 python src/simular_prode_v2.py
+```
+
+📈 Lógica de Simulación
+Fase de Grupos: Simula los 72 partidos de la fase inicial.
+
+Llaves: Clasifica a los 1° y 2° de cada grupo + los 8 mejores terceros.
+
+Mata-Mata: Ejecuta la fase de eliminación directa (16vos a Final) aplicando bonus por Pedigrí Mundialista y Valor de Mercado.
